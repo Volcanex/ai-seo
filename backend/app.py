@@ -100,6 +100,35 @@ def handle_models():
 
     if request.method == 'POST':
         data = request.json
+        
+        # Handle URL-based model creation
+        if 'url' in data:
+            url = data.get('url')
+            model_name = data.get('model_name')
+            
+            if not all([url, model_name]):
+                return jsonify({"error": "Missing required fields"}), 400
+            
+            # Create a single-URL model with the same structure as CSV-based models
+            processed_data = [{
+                "url": url,
+                "additional_data": {}  # Empty additional_data to match CSV structure
+            }]
+            
+            new_model = Model(
+                name=model_name,
+                base_url="",  # Empty base_url as per requirement
+                url_column="url",  # Use "url" as the default column name
+                user_id=user.id,
+                data=json.dumps(processed_data)
+            )
+            
+            db.session.add(new_model)
+            db.session.commit()
+            
+            return jsonify({"message": "Model created successfully", "id": new_model.id}), 201
+        
+        # Handle CSV-based model creation (existing logic)
         csv_id = data.get('csv_id')
         url_column = data.get('url_column')
         base_url = data.get('base_url', '')
@@ -127,7 +156,6 @@ def handle_models():
         db.session.commit()
 
         return jsonify({"message": "Model created successfully", "id": new_model.id}), 201
-
 
 @app.route('/api/models/<int:model_id>', methods=['GET', 'DELETE'])
 def handle_model(model_id):
@@ -554,7 +582,45 @@ def gpt_search(query, max_return):
     ]
     return dummy_results
 
-# ... (rest of your Flask app)
+
+@app.route('/api/models/<int:model_id>/add-url', methods=['POST'])
+def add_url_to_model(model_id):
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    model = Model.query.get(model_id)
+    if not model or model.user_id != user.id:
+        return jsonify({"error": "Model not found or unauthorized"}), 404
+
+    data = request.json
+    url = data.get('url')
+    if not url:
+        return jsonify({"error": "URL is required"}), 400
+
+    try:
+        model_data = json.loads(model.data)
+        # Handle both list and dict formats
+        if isinstance(model_data, dict):
+            if 'data' not in model_data:
+                model_data['data'] = []
+            model_data['data'].append({
+                "url": url,
+                "additional_data": {}
+            })
+        else:
+            model_data.append({
+                "url": url,
+                "additional_data": {}
+            })
+        
+        model.data = json.dumps(model_data)
+        db.session.commit()
+        
+        return jsonify({"message": "URL added successfully"}), 200
+    except Exception as e:
+        logger.error(f"Error in add_url_to_model: {str(e)}")
+        return jsonify({"error": f"Failed to add URL: {str(e)}"}), 500
 
 
 if __name__ == '__main__':

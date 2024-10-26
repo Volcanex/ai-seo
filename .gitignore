@@ -4,3 +4,6 @@ scraper.log
 node_modules
 backend/adminsdk.json
 .env
+backend/instance
+backend/logs
+backend/user_files

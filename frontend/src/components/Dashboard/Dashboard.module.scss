@@ -1,29 +1,10 @@
 .dashboard {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   color: #333;
   background-color: #dbdbdb;
-
-  h1,
-  h2,
-  h3 {
-    color: #434c55;
-  }
-
-  h1 {
-    font-size: 2.5em;
-    margin-bottom: 30px;
-    text-align: center;
-  }
-
-  h2 {
-    font-size: 1.8em;
-    margin-bottom: 20px;
-  }
-
-
 
   input[type="text"],
   input[type="file"],
@@ -36,20 +17,6 @@
     font-size: 16px;
   }
 
-  button {
-    background-color: #0066cc;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-
-    &:hover {
-      background-color: #0052a3;
-    }
-  }
 
   .error {
     color: #d32f2f;
@@ -105,5 +72,20 @@
     ul {
       padding-left: 20px;
     }
+  }
+}
+
+.inputGroup {
+  margin-bottom: 15px;
+
+  input {
+    margin-bottom: 5px;
+  }
+
+  .inputSubtitle {
+    font-size: 14px;
+    color: #666;
+    margin-top: -5px;
+    margin-bottom: 10px;
   }
 }

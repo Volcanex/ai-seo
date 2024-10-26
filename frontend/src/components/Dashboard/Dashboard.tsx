@@ -31,12 +31,81 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCsvManager, setShowCsvManager] = useState(false);
 
+  // New state for Start Analysing section
+  const [analysisUrl, setAnalysisUrl] = useState('');
+  const [analysisModelName, setAnalysisModelName] = useState('');
+  const [urlError, setUrlError] = useState<string | null>(null);
+
   useEffect(() => {
     if (user) {
       fetchCsvs();
       fetchModels();
     }
   }, [user]);
+
+  // Validate URL format
+  const isValidUrl = (urlString: string): boolean => {
+    try {
+      new URL(urlString);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Handle URL input change
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setAnalysisUrl(url);
+    if (url && !isValidUrl(url)) {
+      setUrlError('Please enter a valid URL');
+    } else {
+      setUrlError(null);
+      // Auto-generate model name from URL if none is set
+      if (!analysisModelName) {
+        try {
+          const urlObj = new URL(url);
+          setAnalysisModelName(urlObj.hostname);
+        } catch (e) {
+          // Invalid URL, don't set model name
+        }
+      }
+    }
+  };
+
+  // Handle URL submission
+  const handleUrlSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (!analysisUrl || !isValidUrl(analysisUrl)) {
+      setUrlError('Please enter a valid URL');
+      return;
+    }
+
+    try {
+      const token = await user?.getIdToken();
+      const response = await axios.post(
+        `${API_URL}/api/models`,
+        {
+          url: analysisUrl,
+          model_name: analysisModelName || new URL(analysisUrl).hostname
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      await fetchModels();
+      setAnalysisUrl('');
+      setAnalysisModelName('');
+      setUrlError(null);
+    } catch (error) {
+      console.error('Error creating model:', error);
+      setUrlError('Failed to create model from URL');
+    }
+  };
 
   const fetchCsvs = async () => {
     try {
@@ -166,16 +235,55 @@ const Dashboard: React.FC = () => {
     <div className={styles.dashboard}>
       <h1>Dashboard</h1>
 
+      {/* New Start Analysing Section */}
       <div className={styles.createModelSection}>
-        <h2>Create New Model</h2>
-        <select value={selectedCsvId || ''} onChange={(e) => setSelectedCsvId(Number(e.target.value))}>
+        <h2>Start Analysing</h2>
+        <form onSubmit={handleUrlSubmit}>
+          <div className={styles.inputGroup}>
+            <input
+              type="text"
+              placeholder="Enter a URL to start analysis"
+              value={analysisUrl}
+              onChange={handleUrlChange}
+              onKeyDown={(e) => e.key === 'Enter' && handleUrlSubmit()}
+            />
+            <div className={styles.inputSubtitle}>
+              Enter a URL to start analysis
+            </div>
+          </div>
+          <input
+            type="text"
+            placeholder="Model Name (optional)"
+            value={analysisModelName}
+            onChange={(e) => setAnalysisModelName(e.target.value)}
+          />
+          {urlError && <div className={styles.error}>{urlError}</div>}
+          <button
+            type="submit"
+            disabled={!analysisUrl || !!urlError}
+          >
+            Create Model
+          </button>
+        </form>
+      </div>
+
+      {/* Renamed Create Model Section */}
+      <div className={styles.createModelSection}>
+        <h2>Create Model Manually</h2>
+        <select
+          value={selectedCsvId || ''}
+          onChange={(e) => setSelectedCsvId(Number(e.target.value))}
+        >
           <option value="">Select a CSV</option>
           {csvs.map(csv => (
             <option key={csv.id} value={csv.id}>{csv.filename}</option>
           ))}
         </select>
 
-        <button onClick={() => setShowCsvManager(!showCsvManager)} className={styles.showButton}>
+        <button
+          onClick={() => setShowCsvManager(!showCsvManager)}
+          className={styles.showButton}
+        >
           {showCsvManager ? 'Hide CSV Manager' : 'Show CSV Manager'}
         </button>
 
@@ -209,6 +317,7 @@ const Dashboard: React.FC = () => {
         {error && <div className={styles.error}>{error}</div>}
       </div>
 
+      {/* Models Section */}
       <div className={styles.modelsSection}>
         <h2>Your Models</h2>
         <ul className={styles.modelsList}>
@@ -227,6 +336,7 @@ const Dashboard: React.FC = () => {
         </ul>
       </div>
 
+      {/* Selected Model View */}
       {selectedModel && (
         <div className={styles.selectedModel}>
           <h2>Selected Model: {selectedModel.name}</h2>
