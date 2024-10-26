@@ -22,11 +22,11 @@ cd /var/www/gabrielpenman.com/backend
 git pull origin main
 
 # Build and start Docker containers
-docker compose down
-docker compose up --build -d
+docker-compose down
+docker-compose up --build -d
 
 # Initial health check
 ./scripts/health-monitor.sh
 
 echo -e "${GREEN}Setup complete!${NC}"
-echo "Monitor logs with: docker compose logs -f"
+echo "Monitor logs with: docker-compose logs -f"
