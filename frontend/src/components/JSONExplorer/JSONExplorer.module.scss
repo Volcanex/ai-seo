@@ -1,0 +1,25 @@
+.jsonExplorer {
+    font-family: monospace;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    max-height: 500px;
+    overflow-y: auto;
+
+    .key {
+        color: #881391;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .value {
+        color: #1a1aa6;
+    }
+
+    .nested {
+        margin-left: 20px;
+    }
+}

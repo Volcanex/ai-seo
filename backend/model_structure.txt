@@ -1,0 +1,22 @@
+{
+  "id": "unique_model_id",
+  "name": "Model Name",
+  "created_at": "2023-05-20T12:00:00Z",
+  "base_url": "https://example.com",
+  "urls": [
+    {
+      "url": "https://example.com/page1",
+      "additional_data": {
+        "column1": "value1",
+        "column2": "value2"
+      }
+    },
+    {
+      "url": "https://example.com/page2",
+      "additional_data": {
+        "column1": "value3",
+        "column2": "value4"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+POST /api/models/upload
+- Uploads a CSV file
+- Returns a temporary ID for the uploaded file
+
+POST /api/models/configure
+- Accepts the temporary ID, URL column, base URL (optional), and model name
+- Processes the CSV and creates the model
+- Returns the model ID
+
+GET /api/models
+- Lists all models for the authenticated user
+
+GET /api/models/<model_id>
+- Retrieves details of a specific model
+
+DELETE /api/models/<model_id>
+- Deletes a specific model
