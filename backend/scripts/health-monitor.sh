@@ -33,7 +33,7 @@ check_container() {
     else
         log_message "${RED}✗ Backend container is not running${NC}"
         cd /var/www/gabrielpenman.com/backend
-        docker compose up -d
+        docker-compose up -d
         log_message "${YELLOW}Started backend container${NC}"
     fi
 }
@@ -56,7 +56,7 @@ check_proxy() {
     else
         log_message "${RED}✗ Backend API is not responding${NC}"
         # Restart container if API is down
-        docker compose restart backend
+        docker-compose restart backend
         log_message "${YELLOW}Restarted backend container${NC}"
     fi
 }
