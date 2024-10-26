@@ -25,3 +25,6 @@ docker compose down
 docker compose up --build
 
 it'll run on port 8000
+
+Internet → Port 80 → Apache → Proxy to Docker (8000)
+                       ↳ Serves static frontend files
