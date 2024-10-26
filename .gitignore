@@ -3,3 +3,4 @@ test_one_model
 scraper.log
 node_modules
 backend/adminsdk.json
+.env
