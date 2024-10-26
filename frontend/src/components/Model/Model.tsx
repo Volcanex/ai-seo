@@ -104,12 +104,13 @@ const Model: React.FC<ModelProps> = ({ modelId }) => {
       </Suspense>
 
       <div className={styles.controls}>
-        <button onClick={() => setMainArea('actions')}>Actions</button>
+
         <button onClick={() => setMainArea('jsonExplorer')}>JSON Explorer</button>
         <button onClick={() => setMainArea('scraper')}>Scraper</button>
         <button onClick={() => setMainArea('altContentGenerator')}>Alt Content Generator</button>
         <button onClick={() => setMainArea('contentRater')}>Content Rater</button>
         <button onClick={() => setMainArea('contentViewer')}>Content Viewer</button>
+        <button onClick={() => setMainArea('actions')}>Actions</button>
         <button onClick={() => setMainArea('testing')}>Testing</button>
       </div>
 
