@@ -7,6 +7,8 @@ import { auth } from '../../firebase';
 import styles from './Model.module.scss';
 import { API_URL } from '@/config';
 import dynamic from 'next/dynamic';
+import DuplicatableContainer from '../../components/DuplicatableContainer/DuplicatableContainer';
+
 
 // Dynamically import components to reduce initial bundle size
 const ModelOverview = dynamic(() => import('../ModelOverview/ModelOverview'));
@@ -137,11 +139,13 @@ const Model: React.FC<ModelProps> = ({ modelId }) => {
             <ContentViewer modelData={model.data} />
           )}
           {mainArea === 'testing' && (
-            <Testing
-              modelId={model.id}
-              modelData={model.data}
-              onAddToModel={handleAddToModel}
-            />
+            <DuplicatableContainer maxInstances={3}>
+              <Testing
+                modelId={model.id}
+                modelData={model.data}
+                onAddToModel={handleAddToModel}
+              />
+            </DuplicatableContainer>
           )}
         </div>
       </Suspense>

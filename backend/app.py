@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import datetime
 from models import db, User, Model, CSV
 import firebase_admin
 from firebase_admin import credentials, auth
@@ -200,14 +201,26 @@ def scrape_model(model_id):
 
     scraper = Scraper()
     model_data = json.loads(model.data)
+    
+    # Handle both list and dict formats
+    if isinstance(model_data, dict):
+        items = model_data.get('data', [])
+    else:
+        items = model_data
+
     messages = []
     last_scraped_id = 0
 
-    for i, item in enumerate(model_data):
+    for i, item in enumerate(items):
         if i >= limit:
             break
 
         if not rescrape and 'scraped_at' in item:
+            continue
+
+        # Ensure item is a dictionary and has a URL
+        if not isinstance(item, dict) or 'url' not in item:
+            messages.append(f"Skipped item {i}: Invalid data format")
             continue
 
         url = item['url']
@@ -224,6 +237,12 @@ def scrape_model(model_id):
         last_scraped_id = i
         time.sleep(delay)
 
+    # Update the model data while preserving structure
+    if isinstance(model_data, dict):
+        model_data['data'] = items
+    else:
+        model_data = items
+
     model.data = json.dumps(model_data)
     model.last_scraped_id = last_scraped_id
     db.session.commit()
@@ -233,7 +252,6 @@ def scrape_model(model_id):
         "messages": messages,
         "last_scraped_id": last_scraped_id
     }), 200
-
 
 @app.route('/api/models/<int:model_id>/generate-alt-content', methods=['POST'])
 def generate_alt_content(model_id):
@@ -461,69 +479,67 @@ def generate_content_rating(api_key, content, rating_method):
 
 @app.route('/api/models/<int:model_id>/test', methods=['POST'])
 def test_model(model_id):
-    logger.info(f"Entered test_model function with model_id: {model_id}")
-    logger.info(f"Request method: {request.method}")
-    logger.info(f"Request headers: {request.headers}")
-    logger.info(f"Request data: {request.get_data(as_text=True)}")
-
     user = get_current_user()
     if not user:
-        logger.warning(f"Failed to authenticate user for model {model_id}")
-        return jsonify({"error": "Failed to authenticate user"}), 401
+        return jsonify({"error": "Unauthorized"}), 401
+
+    model = Model.query.get(model_id)
+    if not model or model.user_id != user.id:
+        return jsonify({"error": "Model not found or unauthorized"}), 404
+
+    data = request.json
+    query = data.get('query')
+    test_method = data.get('testMethod')
+    max_return = data.get('maxReturn', 5)
+    max_highlight_search = data.get('maxHighlightSearch', 50)
+    highlighted_url = data.get('highlightedUrl')
+
+    if not query or not test_method:
+        return jsonify({"error": "Missing required fields"}), 400
 
     try:
-        model = db.session.get(Model, model_id)
-        if not model:
-            logger.error(f"Model {model_id} not found")
-            return jsonify({"error": f"Model {model_id} not found"}), 404
-
-        if model.user_id != user.id:
-            logger.warning(
-                f"Unauthorized access attempt to model {model_id} by user {user.id}")
-            return jsonify({"error": "Unauthorized access to this model"}), 403
-
-        data = request.json
-        query = data.get('query')
-        test_method = data.get('testMethod')
-        max_return = data.get('maxReturn', 5)
-        max_highlight_search = data.get('maxHighlightSearch', 50)
-        highlighted_url = data.get('highlightedUrl')
-
-        logger.info(
-            f"Test parameters: query='{query}', method='{test_method}', max_return={max_return}, max_highlight_search={max_highlight_search}, highlighted_url='{highlighted_url}'")
-
-        if not query or not test_method:
-            logger.warning("Missing required fields in request")
-            return jsonify({"error": "Missing required fields"}), 400
-
+        # Get results based on test method
         if test_method == 'google':
-            results = google_search(
-                query, max_return, max_highlight_search, highlighted_url)
+            results = google_search(query, max_return, max_highlight_search, highlighted_url)
         elif test_method == 'gpt':
             results = gpt_search(query, max_return)
         else:
-            logger.warning(f"Unsupported test method: {test_method}")
             return jsonify({"error": "Unsupported test method"}), 400
 
-        # Save query to model
+        # Load existing model data
         model_data = json.loads(model.data)
+        
+        # Convert model_data to the correct structure if needed
         if isinstance(model_data, list):
-            model_data = {'data': model_data, 'queries': []}
-        elif isinstance(model_data, dict) and 'queries' not in model_data:
+            model_data = {
+                'data': model_data,  # Original scraped data
+                'queries': []        # Query results
+            }
+        elif 'queries' not in model_data:
             model_data['queries'] = []
 
-        model_data['queries'].append({'query': query, 'results': results})
+        # Add new query results
+        model_data['queries'].append({
+            'query': query,
+            'results': results,
+            'method': test_method,
+            'timestamp': datetime.datetime.now().isoformat(),
+            'parameters': {
+                'max_return': max_return,
+                'max_highlight_search': max_highlight_search,
+                'highlighted_url': highlighted_url
+            }
+        })
+
+        # Save updated model data
         model.data = json.dumps(model_data)
         db.session.commit()
 
-        logger.info(f"Successfully processed test for model {model_id}")
         return jsonify(results), 200
 
     except Exception as e:
-        logger.exception(
-            f"An error occurred while processing test for model {model_id}: {str(e)}")
-        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-
+        logger.exception(f"Error in test_model: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 def get_current_user():
     auth_header = request.headers.get('Authorization')
