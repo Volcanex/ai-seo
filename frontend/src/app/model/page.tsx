@@ -5,6 +5,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import Layout from '../../components/Layout/Layout';
 
 const DynamicModel = dynamic(() => import('../../components/Model/Model'), {
     ssr: false,
@@ -37,7 +38,8 @@ function ModelContent() {
 export default function ModelPage() {
     return (
         <Suspense fallback={<div>Loading page...</div>}>
-            <ModelContent />
+
+            <Layout><ModelContent /></Layout>
         </Suspense>
     );
 }
