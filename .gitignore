@@ -7,3 +7,4 @@ backend/adminsdk.json
 backend/instance
 backend/logs
 backend/user_files
+frontend/src/config.ts
