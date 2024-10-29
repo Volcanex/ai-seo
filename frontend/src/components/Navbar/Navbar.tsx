@@ -23,9 +23,9 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
       </div>
 
       <div className={styles.navMiddle}>
-        <Link href="/models">Models</Link>
-        <Link href="/testing">Testing</Link>
-        <Link href="/analytics">Analytics</Link>
+        <Link href="/">Home</Link>
+        <Link href="/profile">Testing</Link>
+        <Link href="/analytics">Testing</Link>
       </div>
 
       <div className={styles.navRight}>
